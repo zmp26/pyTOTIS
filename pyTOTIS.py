@@ -2,10 +2,14 @@ from gpiozero import LED, Button
 import lcddriver
 from time import *
 import os
+from pymongo import MongoClient
+import datetime
 
 """
 pyTOTIS
 python Tech Ops Toner Inventory System
+
+Developed by: Zach Purcell, Jacob Bell
 """
 
 #declaring lcd objects
@@ -27,17 +31,24 @@ deliver_btn = Button(DELIVER_BTN_PIN)
 deploy_btn = Button(DEPLOY_BTN_PIN)
 
 #pyTOTIS version
-pyTOTIS_ver = "    ver  0.1    "
+pyTOTIS_ver = "    ver  0.2    "
+
+#creates a MongoClient connected to the running mongod instance
+#and a collection (table) to insert
+# client = MongoClient()
+# collection = db.primary_collection
 
 # Make a class to be able to define toner objects.
 # Each toner type will have its own object from this
 # class that will be responsible for holding the name,
-# barcode, quantity, and whether or not it is HI or LI
+# barcode, quantity, time recorded, and whether or not it is HI or LI
 class Toner:
-    def __init__(self, tonername, barcode, quantity, threshold):
+    def __init__(self, tonername, barcode, quantity, threshold, date, time):
         self.tonername = tonername
         self.barcode = barcode
         self.quantity = quantity
+        self.time = time
+        self.date = date
         self.threshold = threshold
 
     def increase_quantity(self):
@@ -71,6 +82,18 @@ class Toner:
     def get_barcode(self):
         return self.barcode
 
+    def set_time(self, time):
+        self.time = time
+
+    def get_time(self):
+        return self.time
+
+    def set_date(self, date):
+        self.date = date
+
+    def get_date(self):
+        return self.date
+
     def set_tonername(self, tonername):
         #returns 1 if successful update
         #returns -1 otherwise
@@ -97,8 +120,7 @@ toner_file.close()
 
 for line in lines:
     new_line = line.split()
-    print type(new_line[2])
-    tonerlist.append(Toner(str(new_line[2]), str(new_line[0]), int(new_line[1]), HI_THRESHOLD_QUANTITY)) #defaulting all toners to HI
+    tonerlist.append(Toner(str(new_line[2]), str(new_line[0]), int(new_line[1]), HI_THRESHOLD_QUANTITY, new_line[3], new_line[4])) #defaulting all toners to HI
 
 def pyTOTIS_startup():
     lcd.lcd_display_string("     pyTOTIS    ", 1)
@@ -111,19 +133,24 @@ def pyTOTIS_main_menu():
     lcd.lcd_display_string("     pyTOTIS    ", 1)
     lcd.lcd_display_string("Press When Ready", 2 )
 
-def pyTOTIS_update_toners(filename, tl):
+def pyTOTIS_update_toners(filename, tl, time):
     #filename is name file to update
     #tl is tonerlist used in pyTOTIS
+    fileline = ""
     os.remove("toners.txt")
     f = open(filename, "w")
     for t in tl: #iterate over all toner objects t in toner list tl
         if t == tl[-1]:
-            fileline = str(t.get_barcode()) + " " + str(t.get_quantity()) + " " + str(t.get_tonername())
+            fileline = str(t.get_barcode()) + " " + str(t.get_quantity()) + " " + str(t.get_tonername()) +  " " + str(t.get_date()) + " " + str(t.get_time())
         else:
-            fileline = str(t.get_barcode()) + " " + str(t.get_quantity()) + " " + str(t.get_tonername()) + "\n"
+            fileline = str(t.get_barcode()) + " " + str(t.get_quantity()) + " " + str(t.get_tonername()) +  " " + str(t.get_date()) + " " + str(t.get_time()) + "\n"
 
         f.write(fileline)
     f.close()
+
+    #returns the time that the list was last modified; if this is
+    #ever needed for reference this function can be called
+    return time
 
 def pyTOTIS_toner_deliver(tl):
     temp = False
@@ -139,20 +166,28 @@ def pyTOTIS_toner_deliver(tl):
             line.increase_quantity()
             lcd.lcd_display_string("Current  Amount:", 1)
             lcd.lcd_display_string(str(line.get_quantity()), 2)
+            line.set_time(str(datetime.datetime.today()).split()[1].split(".")[0])
+            line.set_date(str(datetime.datetime.today()).split()[0])
+            print "Change logged at: " + str(datetime.datetime.today()).split(".")[0]
             sleep(2)
             temp = True
 
     if not temp:
         #tonername, barcode, quantity, threshold
-        tl.append(Toner("no_name", toner_barcode, 1, HI_THRESHOLD_QUANTITY))
+        tl.append(Toner("no_name", toner_barcode, 1, HI_THRESHOLD_QUANTITY, str(datetime.datetime.today()).split()[0], str(datetime.datetime.today()).split()[1].split(".")[0]))
+        print "Change logged at: " + str(datetime.datetime.today()).split(".")[0]
         lcd.lcd_display_string("no_name  created", 1)
         lcd.lcd_display_string("amend toners.txt", 2)
+        tl[len(tl)-1].set_time(str(datetime.datetime.today()).split()[1].split(".")[0])
+        tl[len(tl)-1].set_date(str(datetime.datetime.today()).split()[0])
         sleep(2)
 
     #update toners.txt below
-    pyTOTIS_update_toners("toners.txt", tl)
+    pyTOTIS_update_toners("toners.txt", tl, str(datetime.datetime.today()).split(".")[0])
+
 
     pyTOTIS_main_menu()
+
 
 def pyTOTIS_toner_deploy(tl):
     temp = False
@@ -169,17 +204,25 @@ def pyTOTIS_toner_deploy(tl):
             if retval == 1: #this means that the toner was successfully found and decreased by 1
                 lcd.lcd_display_string("Current  Amount:", 1)
                 lcd.lcd_display_string(str(line.get_quantity()), 2)
+                line.set_time(str(datetime.datetime.today()).split()[1].split(".")[0])
+                line.set_date(str(datetime.datetime.today()).split()[0])
+                print "Change logged at: " + str(datetime.datetime.today()).split(".")[0]
                 sleep(2)
                 temp = True
     if not temp:
         #tonername, barcode, quantity, threshold
-        tl.append(Toner("no_name", toner_barcode, 0, HI_THRESHOLD_QUANTITY))
+        tl.append(Toner("no_name", toner_barcode, 0, HI_THRESHOLD_QUANTITY, str(datetime.datetime.today()).split()[0], str(datetime.datetime.today()).split()[1].split(".")[0]))
+        print "Change logged at: " + str(datetime.datetime.today()).split(".")[0]
         lcd.lcd_display_string("no_name  created", 1)
         lcd.lcd_display_string("amend toners.txt", 2)
         sleep(2)
+        tl[len(tl)-1].set_time(str(datetime.datetime.today()).split()[1].split(".")[0])
+        tl[len(tl)-1].set_date(str(datetime.datetime.today()).split()[0])
+        sleep(2)
 
     #update toners.txt below
-    pyTOTIS_update_toners("toners.txt", tl)
+    pyTOTIS_update_toners("toners.txt", tl, str(datetime.datetime.today()).split(".")[0])
+
 
     pyTOTIS_main_menu()
 
