@@ -4,6 +4,10 @@ from time import *
 import os
 from pymongo import MongoClient
 import datetime
+<<<<<<< HEAD
+import logging
+=======
+>>>>>>> 00dd912383c0cc5a2f0b93f7b03bf31b7a6f62de
 
 """
 pyTOTIS
@@ -29,6 +33,10 @@ DEPLOY_BTN_PIN = 25
 blue_led = LED(BLUE_LED_PIN)
 deliver_btn = Button(DELIVER_BTN_PIN)
 deploy_btn = Button(DEPLOY_BTN_PIN)
+
+#creating a realtime log file
+LOG_FILE = 'pyTOTIS.log'
+logging.basicConfig(filename=LOG_FILE,level=logging.INFO)
 
 #pyTOTIS version
 pyTOTIS_ver = "    ver  0.2    "
@@ -146,6 +154,7 @@ def pyTOTIS_update_toners(filename, tl, time):
             fileline = str(t.get_barcode()) + " " + str(t.get_quantity()) + " " + str(t.get_tonername()) +  " " + str(t.get_date()) + " " + str(t.get_time()) + "\n"
 
         f.write(fileline)
+        logging.info(t.get_tonername() + " was changed on: " + str(datetime.datetime.today()))
     f.close()
 
     #returns the time that the list was last modified; if this is
@@ -169,6 +178,10 @@ def pyTOTIS_toner_deliver(tl):
             line.set_time(str(datetime.datetime.today()).split()[1].split(".")[0])
             line.set_date(str(datetime.datetime.today()).split()[0])
             print "Change logged at: " + str(datetime.datetime.today()).split(".")[0]
+<<<<<<< HEAD
+            logging.info("List was changed on: " + str(datetime.datetime.today()))
+=======
+>>>>>>> 00dd912383c0cc5a2f0b93f7b03bf31b7a6f62de
             sleep(2)
             temp = True
 
@@ -180,6 +193,10 @@ def pyTOTIS_toner_deliver(tl):
         lcd.lcd_display_string("amend toners.txt", 2)
         tl[len(tl)-1].set_time(str(datetime.datetime.today()).split()[1].split(".")[0])
         tl[len(tl)-1].set_date(str(datetime.datetime.today()).split()[0])
+<<<<<<< HEAD
+        logging.info("List was changed on: " + str(datetime.datetime.today()))
+=======
+>>>>>>> 00dd912383c0cc5a2f0b93f7b03bf31b7a6f62de
         sleep(2)
 
     #update toners.txt below
@@ -207,6 +224,10 @@ def pyTOTIS_toner_deploy(tl):
                 line.set_time(str(datetime.datetime.today()).split()[1].split(".")[0])
                 line.set_date(str(datetime.datetime.today()).split()[0])
                 print "Change logged at: " + str(datetime.datetime.today()).split(".")[0]
+<<<<<<< HEAD
+                logging.info("List was changed on: " + str(datetime.datetime.today()))
+=======
+>>>>>>> 00dd912383c0cc5a2f0b93f7b03bf31b7a6f62de
                 sleep(2)
                 temp = True
     if not temp:
@@ -218,6 +239,10 @@ def pyTOTIS_toner_deploy(tl):
         sleep(2)
         tl[len(tl)-1].set_time(str(datetime.datetime.today()).split()[1].split(".")[0])
         tl[len(tl)-1].set_date(str(datetime.datetime.today()).split()[0])
+<<<<<<< HEAD
+        logging.info("List was changed on: " + str(datetime.datetime.today()))
+=======
+>>>>>>> 00dd912383c0cc5a2f0b93f7b03bf31b7a6f62de
         sleep(2)
 
     #update toners.txt below

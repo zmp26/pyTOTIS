@@ -1,0 +1,14 @@
+v 0.1 05/13/19
+----------
+Initial build
+    -Base engine construction implemented for interfacing with pyTOTIS hardware module
+    -Toner deploy/deliver functionality added
+    -Webpage mirrors current data held locally in .../pyTOTIS/toners.txt 
+----------
+
+v 0.2 05/15/19
+----------
+-Began displaying data in a formatted table
+-Added date/time logging functionality into webpage
+-Added "Change logged at: $time" to pyTOTIS.py script
+-Added master log creation upon init
